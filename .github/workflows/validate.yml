@@ -22,16 +22,20 @@ jobs:
           python-version: "3.11"
       - name: 校验所有包
         run: python tools/validate_packages.py --verse .verse --strict
-      - name: 索引与实际包一致
-        run: python - <<'PY'
-import json, pathlib
-idx = json.loads(pathlib.Path('index.json').read_text(encoding='utf-8'))
-dirs = {p.parent.name for p in pathlib.Path('packages').glob('*/wmworld.json')}
-ids = {e['id'] for e in idx.get('packages', [])}
-missing = dirs - ids
-print('packages:', sorted(dirs))
-print('index   :', sorted(ids))
-if missing and idx.get('note') and '自动' in idx.get('note',''):
-    pass
-print('OK' if not (dirs - ids) else f'索引缺条目: {missing}')
-PY
+      - name: 索引里的每条都能找到包文件
+        run: |
+          python - <<'PY'
+          import json, pathlib, sys
+          root = pathlib.Path('.')
+          idx = json.loads((root/'index.json').read_text(encoding='utf-8'))
+          problems = []
+          for entry in idx.get('packages', []):
+              f = entry.get('file')
+              if not f or not (root/f).exists():
+                  problems.append(entry.get('id'))
+              elif len(entry.get('sha256','')) != 64:
+                  problems.append(entry.get('id') + ' (sha256 长度不对)')
+          if problems:
+              print('索引问题:', problems); sys.exit(1)
+          print('index ok:', len(idx.get('packages', [])), 'packages')
+          PY
