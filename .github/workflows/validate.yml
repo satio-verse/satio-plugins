@@ -14,7 +14,7 @@ jobs:
       - name: 取出 satio-verse（只为复用契约校验代码）
         uses: actions/checkout@v4
         with:
-          repository: Tanora001/satio-verse
+          repository: satio-verse/satio-verse
           path: .verse
           sparse-checkout: wm
       - uses: actions/setup-python@v5

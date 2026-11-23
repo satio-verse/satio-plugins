@@ -1,6 +1,6 @@
 # satio-plugins — 官方插件 / 世界目录
 
-这是 [S.A.T.I.O Verse](https://github.com/Tanora001/satio-verse) 的**插件与世界的官方目录仓库**。
+这是 [S.A.T.I.O Verse](https://github.com/satio-verse/satio-verse) 的**插件与世界的官方目录仓库**。
 客户端「市场」页读的就是这里的 `index.json`。
 
 ## 目录结构
@@ -18,7 +18,7 @@ tools/validate_packages.py # 本地等同于 CI 的校验脚本
 1. Fork 本仓库，新建 `packages/<你的插件 id>/`，放入 `wmworld.json`、说明文档、以及界面/资源文件
 2. 本地校验：
    ```bash
-   git clone https://github.com/Tanora001/satio-verse ../satio-verse
+   git clone https://github.com/satio-verse/satio-verse ../satio-verse
    python tools/validate_packages.py --verse ../satio-verse
    ```
 3. 提 PR。CI 会跑同一套契约校验（`wmworld.json` schema 2 + 动作/事件命名 + 文件齐备 + 权限声明）
