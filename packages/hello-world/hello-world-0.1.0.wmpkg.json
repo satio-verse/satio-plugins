@@ -1,0 +1,158 @@
+{
+  "worldmodel_package": 1,
+  "author": "satio-verse",
+  "version": "0.1.0",
+  "revision": "v0.1.0",
+  "spec": {
+    "id": "hello-world",
+    "name": "Hello World（示例世界）",
+    "description": "最小的空间插件示例：一个只读的示例房间，演示 wmworld.json 怎么写。",
+    "files": {
+      "wmworld.json": "{\n  \"id\": \"hello-world\",\n  \"name\": \"Hello World（示例世界）\",\n  \"description\": \"最小的空间插件示例：一个只读的示例房间，演示 wmworld.json 怎么写。\",\n  \"plugin\": {\n    \"schema\": 2,\n    \"version\": \"0.1.0\",\n    \"author\": \"satio-verse\",\n    \"license\": \"Apache-2.0\",\n    \"host\": \">=0.1\",\n    \"tier\": \"panel\",\n    \"permissions\": {\n      \"local\": [],\n      \"notify\": false\n    },\n    \"panel\": {\n      \"entry\": \"spectate.html\",\n      \"tools\": [\n        \"hello_look\"\n      ]\n    },\n    \"budget\": {\n      \"minutes_per_day\": 30\n    },\n    \"world\": {\n      \"kind\": \"space\",\n      \"prefix\": \"hello\",\n      \"events\": [\n        {\n          \"type\": \"hello_entered\",\n          \"sense\": \"saw\",\n          \"urgency\": \"batch\",\n          \"fields\": [\n            \"who\",\n            \"distance_bucket\"\n          ]\n        },\n        {\n          \"type\": \"hello_left\",\n          \"sense\": \"saw\",\n          \"urgency\": \"piggyback\",\n          \"fields\": [\n            \"who\"\n          ]\n        },\n        {\n          \"type\": \"hello_moved\",\n          \"sense\": \"saw\",\n          \"urgency\": \"piggyback\",\n          \"fields\": [\n            \"who\",\n            \"distance_bucket\"\n          ]\n        },\n        {\n          \"type\": \"hello_said\",\n          \"sense\": \"heard\",\n          \"urgency\": \"now\",\n          \"fields\": [\n            \"who\"\n          ]\n        },\n        {\n          \"type\": \"hello_act_result\",\n          \"sense\": \"receipt\",\n          \"urgency\": \"now\"\n        }\n      ],\n      \"actions\": [\n        {\n          \"name\": \"hello_walk\",\n          \"kind\": \"act\",\n          \"outward\": true,\n          \"receipt\": \"hello_act_result\",\n          \"params\": {\n            \"direction\": {\n              \"type\": \"enum\",\n              \"required\": true,\n              \"values\": [\n                \"left\",\n                \"right\",\n                \"up\",\n                \"down\"\n              ]\n            }\n          },\n          \"why\": \"在示例房间里走一步\"\n        },\n        {\n          \"name\": \"hello_say\",\n          \"kind\": \"act\",\n          \"outward\": true,\n          \"receipt\": \"hello_act_result\",\n          \"params\": {\n            \"text\": {\n              \"type\": \"string\",\n              \"required\": true,\n              \"max_len\": 200\n            }\n          },\n          \"why\": \"对房间里的人说一句话\"\n        },\n        {\n          \"name\": \"hello_wave\",\n          \"kind\": \"act\",\n          \"outward\": true,\n          \"receipt\": \"hello_act_result\",\n          \"params\": {},\n          \"why\": \"挥手\"\n        },\n        {\n          \"name\": \"hello_look\",\n          \"kind\": \"query\",\n          \"why\": \"看一眼房间里有谁、离多远\"\n        }\n      ],\n      \"perception\": {\n        \"visible\": [\n          \"who\",\n          \"distance_bucket\",\n          \"own_position\"\n        ],\n        \"hidden\": [\n          \"all_positions\",\n          \"room_roster\"\n        ],\n        \"twin_fixtures\": [\n          \"fixtures/hello-far-pet.json\"\n        ]\n      },\n      \"env_prompt\": \"ENV_PROMPT.md\",\n      \"leave\": {\n        \"ack_timeout_s\": 3\n      },\n      \"spectate\": {\n        \"panel\": \"spectate.html\"\n      }\n    }\n  }\n}\n",
+      "spectate.html": "<!doctype html>\n<html lang=\"zh-CN\">\n<meta charset=\"utf-8\" />\n<title>Hello World · 观战</title>\n<style>\n  body { margin:0; background:#0b0c10; color:#f6f5f2; font:14px/1.6 system-ui, sans-serif; display:grid; place-items:center; height:100vh }\n  .box { text-align:center; opacity:.9 }\n  h1 { font: 300 34px/1.2 Georgia, serif; letter-spacing:.08em; margin:0 0 8px }\n  p { color:#9a9aa3; margin:6px 0 }\n</style>\n<div class=\"box\">\n  <h1>Hello World</h1>\n  <p>这是一个示例世界，没有真实服务端。</p>\n  <p>复制 <code>packages/hello-world/</code> 开始写你自己的世界。</p>\n</div>\n</html>\n",
+      "ENV_PROMPT.md": "# 你正在 hello-world 示例房间里\n\n- 这是一个示例世界，没有真实服务端；所有动作都会立刻返回一个 receipt。\n- 你看不到整张名单，只能看到离你够近的人（谁、大概多远）。\n- 想说话就说一句话；想走就走一步；不确定就 `hello_look` 看一眼。\n",
+      "fixtures/hello-far-pet.json": "{\n  \"who\": \"远处的人\",\n  \"distance_bucket\": \"far\",\n  \"own_position\": [\n    0,\n    0\n  ]\n}\n",
+      "README.md": "# Hello World（示例世界）\n\n最小的空间插件示例。它没有真实服务端，只演示 `wmworld.json` 应该怎么写：\n\n- `world.kind = space`：一个空间世界\n- `prefix = hello`：动作名必须是 `hello_*`\n- 4 个动作、5 个事件、感知半径 visible/hidden\n- 权限档 `panel`（带一个只读的观战界面）\n\n复制这个目录、改 id 与 prefix，就能开始写自己的世界。\n"
+    },
+    "plugin": {
+      "id": "hello-world",
+      "name": "Hello World（示例世界）",
+      "description": "最小的空间插件示例：一个只读的示例房间，演示 wmworld.json 怎么写。",
+      "plugin": {
+        "schema": 2,
+        "version": "0.1.0",
+        "author": "satio-verse",
+        "license": "Apache-2.0",
+        "host": ">=0.1",
+        "tier": "panel",
+        "permissions": {
+          "local": [],
+          "notify": false
+        },
+        "panel": {
+          "entry": "spectate.html",
+          "tools": [
+            "hello_look"
+          ]
+        },
+        "budget": {
+          "minutes_per_day": 30
+        },
+        "world": {
+          "kind": "space",
+          "prefix": "hello",
+          "events": [
+            {
+              "type": "hello_entered",
+              "sense": "saw",
+              "urgency": "batch",
+              "fields": [
+                "who",
+                "distance_bucket"
+              ]
+            },
+            {
+              "type": "hello_left",
+              "sense": "saw",
+              "urgency": "piggyback",
+              "fields": [
+                "who"
+              ]
+            },
+            {
+              "type": "hello_moved",
+              "sense": "saw",
+              "urgency": "piggyback",
+              "fields": [
+                "who",
+                "distance_bucket"
+              ]
+            },
+            {
+              "type": "hello_said",
+              "sense": "heard",
+              "urgency": "now",
+              "fields": [
+                "who"
+              ]
+            },
+            {
+              "type": "hello_act_result",
+              "sense": "receipt",
+              "urgency": "now"
+            }
+          ],
+          "actions": [
+            {
+              "name": "hello_walk",
+              "kind": "act",
+              "outward": true,
+              "receipt": "hello_act_result",
+              "params": {
+                "direction": {
+                  "type": "enum",
+                  "required": true,
+                  "values": [
+                    "left",
+                    "right",
+                    "up",
+                    "down"
+                  ]
+                }
+              },
+              "why": "在示例房间里走一步"
+            },
+            {
+              "name": "hello_say",
+              "kind": "act",
+              "outward": true,
+              "receipt": "hello_act_result",
+              "params": {
+                "text": {
+                  "type": "string",
+                  "required": true,
+                  "max_len": 200
+                }
+              },
+              "why": "对房间里的人说一句话"
+            },
+            {
+              "name": "hello_wave",
+              "kind": "act",
+              "outward": true,
+              "receipt": "hello_act_result",
+              "params": {},
+              "why": "挥手"
+            },
+            {
+              "name": "hello_look",
+              "kind": "query",
+              "why": "看一眼房间里有谁、离多远"
+            }
+          ],
+          "perception": {
+            "visible": [
+              "who",
+              "distance_bucket",
+              "own_position"
+            ],
+            "hidden": [
+              "all_positions",
+              "room_roster"
+            ],
+            "twin_fixtures": [
+              "fixtures/hello-far-pet.json"
+            ]
+          },
+          "env_prompt": "ENV_PROMPT.md",
+          "leave": {
+            "ack_timeout_s": 3
+          },
+          "spectate": {
+            "panel": "spectate.html"
+          }
+        }
+      }
+    }
+  }
+}
