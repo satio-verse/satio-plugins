@@ -1,0 +1,48 @@
+{
+  "id": "hello-world",
+  "name": "Hello World（示例世界）",
+  "description": "最小的空间插件示例：一个只读的示例房间，用来演示 wmworld.json 怎么写。",
+  "plugin": {
+    "schema": 2,
+    "version": "0.1.0",
+    "author": "satio-verse",
+    "license": "Apache-2.0",
+    "host": ">=0.1",
+    "tier": "panel",
+    "permissions": {
+      "local": [],
+      "notify": false
+    },
+    "panel": {
+      "entry": "spectate.html",
+      "tools": []
+    },
+    "budget": {
+      "minutes_per_day": 30
+    },
+    "world": {
+      "kind": "space",
+      "prefix": "hello",
+      "events": [
+        "hello_move",
+        "hello_say",
+        "hello_entered",
+        "hello_left",
+        "hello_act"
+      ],
+      "actions": [
+        "hello_walk",
+        "hello_say",
+        "hello_look",
+        "hello_wave"
+      ],
+      "perception": {
+        "visible": 4,
+        "hidden": 2
+      },
+      "leave": {
+        "ack_timeout_s": 3
+      }
+    }
+  }
+}

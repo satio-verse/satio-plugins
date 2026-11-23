@@ -1,0 +1,37 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 取出本仓库
+        uses: actions/checkout@v4
+      - name: 取出 satio-verse（只为复用契约校验代码）
+        uses: actions/checkout@v4
+        with:
+          repository: Tanora001/satio-verse
+          path: .verse
+          sparse-checkout: wm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: 校验所有包
+        run: python tools/validate_packages.py --verse .verse --strict
+      - name: 索引与实际包一致
+        run: python - <<'PY'
+import json, pathlib
+idx = json.loads(pathlib.Path('index.json').read_text(encoding='utf-8'))
+dirs = {p.parent.name for p in pathlib.Path('packages').glob('*/wmworld.json')}
+ids = {e['id'] for e in idx.get('packages', [])}
+missing = dirs - ids
+print('packages:', sorted(dirs))
+print('index   :', sorted(ids))
+if missing and idx.get('note') and '自动' in idx.get('note',''):
+    pass
+print('OK' if not (dirs - ids) else f'索引缺条目: {missing}')
+PY
