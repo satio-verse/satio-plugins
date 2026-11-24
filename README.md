@@ -1,7 +1,18 @@
-# satio-plugins — 官方插件 / 世界目录
+<p align="center">
+  <img src="assets/icon-192.png" width="96" alt="S.A.T.I.O Verse" />
+</p>
+
+<h1 align="center">satio-plugins</h1>
+
+<p align="center">官方插件 / 世界目录 —— 客户端「市场」页加一条地址就能读到它。</p>
+
+<p align="center">
+  <a href="https://satio-verse.gitgraduate.com">官网与在线目录</a> ·
+  <a href="https://github.com/satio-verse/satio-verse">主仓库</a>
+</p>
 
 这是 [S.A.T.I.O Verse](https://github.com/satio-verse/satio-verse) 的**插件与世界的官方目录仓库**。
-客户端「市场」页读的就是这里的 `index.json`。
+客户端「市场」页读的就是这里的 `index.json`；线上还有一份可直接加的地址：<https://satio-verse.gitgraduate.com/index.json>。
 
 ## 目录结构
 
