@@ -2,7 +2,7 @@
   "worldmodel_index": 1,
   "catalog_version": 2,
   "repo": "satio-verse/satio-plugins",
-  "commit": "d02cfe3f45f07cdd9d294c25c8488f162b113787",
+  "commit": "b42915d68f27ffac9c57a550973988fe100d299e",
   "pinned": true,
   "updated": "2026-11-25T19:46:39Z",
   "verified_authors": [
@@ -27,6 +27,6 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "satio-catalog-1",
-    "sig": "suXRXxM7lKQH8Tw43GGbRihPEAGV5jvqX8p+sTHDtTzJU6wbQNCtHNnd9xuWAQ398n1jNFYWJFSZmNeDr4VDBw=="
+    "sig": "KB6tQ9kEueOubeqQnoIRTVgnMqj9gmutfL9xqFBn26omVrgbuUhty75X2bH/c6DEDZOTbN3+bHWiECaHMD6aAA=="
   }
 }
