@@ -1,0 +1,10 @@
+{
+  "id": "hello-world",
+  "name": "Hello World（示例世界）",
+  "description": "最小的空间插件示例：一个只读的示例房间，演示 wmworld.json 怎么写。",
+  "author": "satio-verse",
+  "version": "0.1.0",
+  "sha256": "e25582121462de8f7090ff58d6468c282e313603d1a1e823598ee9a85bbae4be",
+  "file": "hello-world-0.1.0.wmpkg.json",
+  "release": "hello-world-v0.1.0"
+}

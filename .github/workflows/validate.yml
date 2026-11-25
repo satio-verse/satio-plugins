@@ -24,21 +24,31 @@ jobs:
         run: python tools/validate_packages.py --verse .verse --strict
       - name: 索引必须由 packages/ 生成（不许手改）
         run: python tools/build_index.py --check
-      - name: 索引里的每条都能找到包文件、哈希长度对
+      - name: 索引里的每条都能对上（release 资产 / 仓库文件、哈希长度、https url）
         run: |
           python - <<'PY'
           import json, pathlib, sys
           root = pathlib.Path('.')
+          base = 'https://github.com/satio-verse/satio-plugins/releases/download/'
           idx = json.loads((root/'index.json').read_text(encoding='utf-8'))
           problems = []
           for entry in idx.get('packages', []):
-              f = entry.get('file')
-              if not f or not (root/f).exists():
-                  problems.append(entry.get('id'))
-              elif len(entry.get('sha256','')) != 64:
-                  problems.append(entry.get('id') + ' (sha256 长度不对)')
-              elif not str(entry.get('url','')).startswith('https://'):
-                  problems.append(entry.get('id') + ' (url 不是 https，静态目录当远程源会失败)')
+              pid = entry.get('id')
+              sha = str(entry.get('sha256', ''))
+              url = str(entry.get('url', ''))
+              if len(sha) != 64:
+                  problems.append(pid + ' (sha256 长度不对)')
+                  continue
+              if not url.startswith('https://'):
+                  problems.append(pid + ' (url 不是 https，静态目录当远程源会失败)')
+                  continue
+              release = entry.get('release')
+              if release:
+                  want = base + release + '/' + str(entry.get('file', ''))
+                  if url != want:
+                      problems.append(pid + ' (release url 与 release/file 对不上)')
+              elif not (root / str(entry.get('file', ''))).exists():
+                  problems.append(pid + ' (仓库里没有这个包体，也没有 release 字段)')
           if problems:
               print('索引问题:', problems); sys.exit(1)
           print('index ok:', len(idx.get('packages', [])), 'packages')

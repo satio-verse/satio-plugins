@@ -2,9 +2,9 @@
   "worldmodel_index": 1,
   "catalog_version": 2,
   "repo": "satio-verse/satio-plugins",
-  "commit": "ab70a92f0fda5043cd1d65db5b07619335f40e2a",
+  "commit": "d02cfe3f45f07cdd9d294c25c8488f162b113787",
   "pinned": true,
-  "updated": "2026-11-23T10:54:23Z",
+  "updated": "2026-11-25T19:46:39Z",
   "verified_authors": [
     "satio-verse"
   ],
@@ -18,14 +18,15 @@
       "author": "satio-verse",
       "version": "0.1.0",
       "sha256": "e25582121462de8f7090ff58d6468c282e313603d1a1e823598ee9a85bbae4be",
-      "file": "packages/hello-world/hello-world-0.1.0.wmpkg.json",
-      "url": "https://cdn.jsdelivr.net/gh/satio-verse/satio-plugins@ab70a92f0fda5043cd1d65db5b07619335f40e2a/packages/hello-world/hello-world-0.1.0.wmpkg.json",
+      "file": "hello-world-0.1.0.wmpkg.json",
+      "release": "hello-world-v0.1.0",
+      "url": "https://github.com/satio-verse/satio-plugins/releases/download/hello-world-v0.1.0/hello-world-0.1.0.wmpkg.json",
       "verified": true
     }
   ],
   "signature": {
     "alg": "ed25519",
     "key_id": "satio-catalog-1",
-    "sig": "5UQGeII1L7veyHjEpsVmICMHPuDJLgT/7BsPWeSyv+/h7buaHbDZigIsfZx1eiADob47+uYok+XcUs761rtHCA=="
+    "sig": "suXRXxM7lKQH8Tw43GGbRihPEAGV5jvqX8p+sTHDtTzJU6wbQNCtHNnd9xuWAQ398n1jNFYWJFSZmNeDr4VDBw=="
   }
 }

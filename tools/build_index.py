@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
-"""从 packages/*/*.wmpkg.json 生成 index.json（静态目录，谁都能自建一份）。
+"""从 packages/*/*.meta.json（+ 迁移期的 *.wmpkg.json）生成 index.json。
 
 设计口径（和 satio-verse 的客户端对齐）：
+- **包体放 GitHub Release**，仓库只留 `*.meta.json`：`{id,name,description,author,version,sha256,file,release}`。
+  目录里给 `url = https://github.com/<repo>/releases/download/<release>/<file>`，客户端下载后按 `sha256` 逐字节校验。
+  这样目录仓库不会因为包体越来越大而变成几个 G；`release` 标签按「包名-版本」一版一个，天然不可变。
+- 仓库里如果还留着 `*.wmpkg.json`（迁移期），照旧按 CDN 路径发布；有 meta 的包以 release 为准。
 - sha256 用「规范化 JSON」算：json.dumps(ensure_ascii=False, sort_keys=True, separators=(',', ':'))，和 wm/platform_services.canonical 一致。
-- 每个包同时给 `file`（仓库内相对路径，本地源可用）和 `url`（CDN/raw 的 https 地址，静态目录当远程源用）。
 - `verified` 由 curated.json 决定：作者在名单里才为 true。它只是「官方认证」标记，
   不代表没认证的不能装 —— 安装闸门永远是客户端的装前报告。
 - 输出是确定性的：包按 (id, version) 排序，`updated` 取包文件最新 mtime（可用 --now 覆盖）。
@@ -35,6 +38,10 @@ from pathlib import Path
 DEFAULT_BASE_URL = "https://cdn.jsdelivr.net/gh/satio-verse/satio-plugins@main"
 DEFAULT_CURATED = ["satio-verse"]
 DEFAULT_REPO = "satio-verse/satio-plugins"
+# 包体放 GitHub Release，仓库里只留 *.meta.json（元数据 + sha256）。
+# 好处：目录仓库不会因为包体变成几个 G，客户端从 release 资产取包，sha256 仍然逐字节校验。
+RELEASE_BASE = "https://github.com/satio-verse/satio-plugins/releases/download"
+META_FIELDS = ("id", "name", "version", "sha256", "file", "release")
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 PINNED_URL_RE = re.compile(r"@[0-9a-f]{40}(?=/)")
 # 这些键会随每次发布漂移，--check 比对时不算内容变化
@@ -146,6 +153,46 @@ def build(root: Path, base_url: str, now: str | None, commit: str = "") -> dict:
         url_base = url_base[: -len("@main")] + "@" + pin
     packages = []
     newest = 0.0
+    seen = set()
+
+    # 1) 元数据条目：包体在 GitHub Release（tag 形如 hello-world-v0.1.0），仓库里只有 *.meta.json
+    for path in sorted((root / "packages").glob("*/*.meta.json")):
+        data = json.loads(path.read_text(encoding="utf-8"))
+        missing = [k for k in META_FIELDS if not str(data.get(k) or "").strip()]
+        if missing:
+            raise SystemExit(f"{path}: 缺少字段 {missing}")
+        sha = str(data["sha256"]).strip().lower()
+        if not re.fullmatch(r"[0-9a-f]{64}", sha):
+            raise SystemExit(f"{path}: sha256 必须是 64 位小写十六进制")
+        release = str(data["release"]).strip()
+        asset = str(data["file"]).strip()
+        pid = str(data["id"]).strip()
+        version = str(data["version"]).strip()
+        entry = {
+            "id": pid,
+            "name": str(data.get("name") or pid),
+            "description": str(data.get("description") or ""),
+            "author": str(data.get("author") or "unknown"),
+            "version": version,
+            "sha256": sha,
+            "file": asset,
+            "release": release,
+            "url": f"{RELEASE_BASE}/{release}/{asset}",
+            "verified": bool(str(data.get("author") or "") in curated),
+        }
+        if data.get("kind"):
+            entry["kind"] = str(data["kind"])
+        if data.get("license"):
+            entry["license"] = str(data["license"])
+        if data.get("homepage"):
+            entry["homepage"] = str(data["homepage"])
+        newest = max(newest, path.stat().st_mtime)
+        seen.add((pid, version))
+        if is_removed(entry, removed):
+            continue
+        packages.append(entry)
+
+    # 2) 兼容迁移期：仓库里还留着包体的，照旧按 CDN 路径发布
     for path in sorted((root / "packages").glob("*/*.wmpkg.json")):
         package = json.loads(path.read_text(encoding="utf-8"))
         if package.get("worldmodel_package") != 1:
@@ -153,6 +200,8 @@ def build(root: Path, base_url: str, now: str | None, commit: str = "") -> dict:
         spec = package.get("spec") or {}
         pid = spec.get("id") or path.parent.name
         version = package.get("version") or ""
+        if (pid, version) in seen:
+            continue  # 已经有 meta 的包，以 release 资产为准
         rel = path.relative_to(root).as_posix()
         entry = {
             "id": pid,
