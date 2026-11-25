@@ -25,12 +25,20 @@ import argparse
 import base64
 import hashlib
 import json
+import os
+import re
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 DEFAULT_BASE_URL = "https://cdn.jsdelivr.net/gh/satio-verse/satio-plugins@main"
 DEFAULT_CURATED = ["satio-verse"]
+DEFAULT_REPO = "satio-verse/satio-plugins"
+COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
+PINNED_URL_RE = re.compile(r"@[0-9a-f]{40}(?=/)")
+# 这些键会随每次发布漂移，--check 比对时不算内容变化
+VOLATILE_FIELDS = ("signature", "updated", "commit", "pinned")
 
 
 def canonical(value) -> bytes:
@@ -99,9 +107,43 @@ def is_removed(entry: dict, removed: list[dict]) -> bool:
     return False
 
 
-def build(root: Path, base_url: str, now: str | None) -> dict:
+def git_commit(root: Path, override: str = "auto") -> str:
+    """把目录钉到某个 40 位 commit。
+
+    - `--commit <40hex>`：直接用（CI 里传 $GITHUB_SHA 最稳）。
+    - `--commit auto`（默认）：先看 GITHUB_SHA，再问本地 git；都拿不到就返回 ""（目录照常能用，只是没钉）。
+    - `--commit main`：不钉，url 里写 @main。
+    为什么钉：签名只管「这份目录没被改」，管不了「包从哪个版本的仓库取的」；钉了 commit，
+    包体就落在不可变的那棵树上，换包只能换 commit，而换 commit 要重新签名。
+    """
+    if override == "main":
+        return ""
+    if override and override != "auto":
+        if not COMMIT_RE.match(override):
+            raise SystemExit(f"--commit 只接受 40 位小写十六进制 / auto / main，收到：{override}")
+        return override
+    env = (os.environ.get("GITHUB_SHA") or "").strip().lower()
+    if COMMIT_RE.match(env):
+        return env
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "HEAD"],
+            capture_output=True, text=True, timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return ""
+    sha = (out.stdout or "").strip().lower()
+    return sha if COMMIT_RE.match(sha) else ""
+
+
+def build(root: Path, base_url: str, now: str | None, commit: str = "") -> dict:
     curated = load_curated(root)
     removed = load_removed(root)
+    # 钉了 commit 就把 url 一起钉过去：@<commit> 指向不可变的那棵树
+    pin = commit or "main"
+    url_base = base_url.rstrip("/")
+    if url_base.endswith("@main") and commit:
+        url_base = url_base[: -len("@main")] + "@" + pin
     packages = []
     newest = 0.0
     for path in sorted((root / "packages").glob("*/*.wmpkg.json")):
@@ -120,7 +162,7 @@ def build(root: Path, base_url: str, now: str | None) -> dict:
             "version": version,
             "sha256": sha256_of(package),
             "file": rel,
-            "url": base_url.rstrip("/") + "/" + rel,
+            "url": url_base + "/" + rel,
             "verified": bool(package.get("author") in curated),
         }
         if spec.get("kind"):
@@ -139,6 +181,9 @@ def build(root: Path, base_url: str, now: str | None) -> dict:
     manifest = {
         "worldmodel_index": 1,
         "catalog_version": 2,
+        "repo": DEFAULT_REPO,
+        "commit": commit,
+        "pinned": bool(commit),
         "updated": stamp,
         "verified_authors": curated,
         "note": "插件包由 PR 提交，CI 校验后合并；这一份是静态目录，客户端「市场」页直接读它。",
@@ -194,6 +239,7 @@ def main() -> int:
     ap.add_argument("--check", action="store_true", help="只比对，不写盘")
     ap.add_argument("--sign-key", default="", help="Ed25519 私钥 PEM；给了才给 index 签名")
     ap.add_argument("--key-id", default=DEFAULT_KEY_ID, help="写进 signature.key_id，客户端据此选公钥")
+    ap.add_argument("--commit", default="auto", help="钉到哪个 commit：auto（默认）/ main（不钉）/ 40 位 sha")
     ap.add_argument("--show-pubkey", action="store_true", help="只打印公钥 base64 后退出")
     args = ap.parse_args()
 
@@ -205,7 +251,7 @@ def main() -> int:
             return 2
         print(public_key_b64(Path(args.sign_key)))
         return 0
-    built = build(root, args.base_url, args.now or None)
+    built = build(root, args.base_url, args.now or None, commit=git_commit(root, args.commit))
     if args.sign_key:
         built = sign_manifest(built, Path(args.sign_key), args.key_id)
     text = json.dumps(built, ensure_ascii=False, indent=2) + "\n"
@@ -214,17 +260,22 @@ def main() -> int:
         if not target.is_file():
             print("index.json 不存在")
             return 1
+        # 比对口径：commit/pinned/repo/updated/signature 每次发布都会变，只比目录内容；
+        # 包里 url 的 @<sha> 归一成 @main 再比（钉住的 commit 在 CI 里当然和本地不同）。
+        probe = json.loads(json.dumps(build(root, args.base_url, args.now or None, commit=""), ensure_ascii=False))
         current = json.loads(target.read_text(encoding="utf-8"))
-        probe = json.loads(text)
-        # updated 与 signature 允许漂移：只比目录内容
         for item in (current, probe):
-            item.pop("updated", None)
-            item.pop("signature", None)
+            for key in VOLATILE_FIELDS:
+                item.pop(key, None)
+            item.pop("repo", None)
+            for pkg in item.get("packages") or []:
+                if isinstance(pkg, dict) and isinstance(pkg.get("url"), str):
+                    pkg["url"] = PINNED_URL_RE.sub("@main", pkg["url"])
         if current != probe:
             print("index.json 与 packages/ 不一致，请运行 python tools/build_index.py")
             return 1
         mark = "已签名" if "signature" in json.loads(target.read_text(encoding="utf-8")) else "未签名"
-        print(f"index ok: {len(built['packages'])} 个包（{mark}）")
+        print(f"index ok: {len(probe['packages'])} 个包（{mark}）")
         return 0
 
     target.write_text(text, encoding="utf-8", newline="\n")
