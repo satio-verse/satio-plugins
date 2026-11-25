@@ -1,16 +1,22 @@
 {
   "worldmodel_index": 1,
-  "updated": "2026-11-23",
-  "note": "插件包由 PR 提交，CI 校验后合并；客户端「市场」页读这个文件。",
+  "catalog_version": 2,
+  "updated": "2026-11-23T10:54:23Z",
+  "verified_authors": [
+    "satio-verse"
+  ],
+  "note": "插件包由 PR 提交，CI 校验后合并；这一份是静态目录，客户端「市场」页直接读它。",
   "packages": [
     {
       "id": "hello-world",
       "name": "Hello World（示例世界）",
-      "description": "最小的空间插件示例，演示 wmworld.json 怎么写。",
+      "description": "最小的空间插件示例：一个只读的示例房间，演示 wmworld.json 怎么写。",
       "author": "satio-verse",
       "version": "0.1.0",
       "sha256": "e25582121462de8f7090ff58d6468c282e313603d1a1e823598ee9a85bbae4be",
-      "file": "packages/hello-world/hello-world-0.1.0.wmpkg.json"
+      "file": "packages/hello-world/hello-world-0.1.0.wmpkg.json",
+      "url": "https://cdn.jsdelivr.net/gh/satio-verse/satio-plugins@main/packages/hello-world/hello-world-0.1.0.wmpkg.json",
+      "verified": true
     }
   ]
 }

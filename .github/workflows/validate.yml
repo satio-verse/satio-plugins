@@ -22,7 +22,9 @@ jobs:
           python-version: "3.11"
       - name: 校验所有包
         run: python tools/validate_packages.py --verse .verse --strict
-      - name: 索引里的每条都能找到包文件
+      - name: 索引必须由 packages/ 生成（不许手改）
+        run: python tools/build_index.py --check
+      - name: 索引里的每条都能找到包文件、哈希长度对
         run: |
           python - <<'PY'
           import json, pathlib, sys
@@ -35,6 +37,8 @@ jobs:
                   problems.append(entry.get('id'))
               elif len(entry.get('sha256','')) != 64:
                   problems.append(entry.get('id') + ' (sha256 长度不对)')
+              elif not str(entry.get('url','')).startswith('https://'):
+                  problems.append(entry.get('id') + ' (url 不是 https，静态目录当远程源会失败)')
           if problems:
               print('索引问题:', problems); sys.exit(1)
           print('index ok:', len(idx.get('packages', [])), 'packages')
