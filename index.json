@@ -6,6 +6,7 @@
     "satio-verse"
   ],
   "note": "插件包由 PR 提交，CI 校验后合并；这一份是静态目录，客户端「市场」页直接读它。",
+  "revoked": [],
   "packages": [
     {
       "id": "hello-world",
@@ -18,5 +19,10 @@
       "url": "https://cdn.jsdelivr.net/gh/satio-verse/satio-plugins@main/packages/hello-world/hello-world-0.1.0.wmpkg.json",
       "verified": true
     }
-  ]
+  ],
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "satio-catalog-1",
+    "sig": "4/aM3OPpgaRiOHzdMrpD5usY6D68qtjHyY/H3oH1PdTsIGT16c/4TPqcUndDdIi5RPG4YhC7Jx9LC1kB4ObRCQ=="
+  }
 }

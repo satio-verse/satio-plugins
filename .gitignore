@@ -1,0 +1,6 @@
+
+
+# 目录签名私钥（CI 用 GitHub secret，本地只留一份）
+tools/keys/
+*.key
+*.pem
